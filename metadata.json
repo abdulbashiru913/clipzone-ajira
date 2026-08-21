@@ -1,0 +1,6 @@
+{
+  "name": "ClipZone Ajira",
+  "description": "Jukwaa kuu la kuunganisha Watafuta Kazi na Waajiri Tanzania lenye feeds mbili katika moja.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
