@@ -22,10 +22,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.SearchOff
+import androidx.compose.material.icons.filled.WorkOutline
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -47,7 +46,6 @@ import androidx.compose.ui.unit.sp
 import com.example.data.model.Job
 import com.example.data.model.JobSeekerProfile
 import com.example.data.model.UserRole
-import com.example.ui.components.AppSearchBar
 import com.example.ui.components.AppTopHeader
 import com.example.ui.components.FeedTabSelector
 import com.example.ui.components.JobCard
@@ -58,9 +56,11 @@ import com.example.ui.theme.NeutralDark
 import com.example.ui.theme.NeutralMedium
 import com.example.ui.viewmodel.AjiraViewModel
 import com.example.ui.viewmodel.FeedTab
+import com.example.util.AppLanguage
+import com.example.util.AppStrings
 
 /**
- * 2. FeedScreen.kt - SCREEN KUU YA CLIPZONE AJIRA (Feed 2 Katika 1)
+ * 2. FeedScreen.kt - SCREEN KUU YA CLIPZONE AJIRA (Clean, Minimal, No Search, Bilingual)
  */
 @Composable
 fun FeedScreen(
@@ -70,8 +70,8 @@ fun FeedScreen(
     onAddClick: () -> Unit,
     onRoleBadgeClick: () -> Unit
 ) {
+    val appLanguage by viewModel.appLanguage.collectAsState()
     val selectedTab by viewModel.selectedTab.collectAsState()
-    val searchQuery by viewModel.searchQuery.collectAsState()
     val selectedLocation by viewModel.selectedLocation.collectAsState()
     val isOffline by viewModel.isOfflineMode.collectAsState()
     val currentUser by viewModel.currentUser.collectAsState()
@@ -86,34 +86,29 @@ fun FeedScreen(
             Column {
                 AppTopHeader(
                     isOffline = isOffline,
-                    userRoleText = currentUser.role.displayNameSwahili,
+                    appLanguage = appLanguage,
+                    onLanguageToggle = {
+                        viewModel.setAppLanguage(
+                            if (appLanguage == AppLanguage.SWAHILI) AppLanguage.ENGLISH else AppLanguage.SWAHILI
+                        )
+                    },
+                    userRoleText = currentUser.role.getDisplayName(appLanguage),
                     onRoleClick = onRoleBadgeClick
                 )
 
-                // Tab 2 Kuu zenye animated switch
+                // Tab 2 Kuu (WATAFUTA KAZI / WAJIRI)
                 FeedTabSelector(
                     selectedTab = selectedTab,
                     jobSeekersCount = profiles.size,
                     employersCount = jobs.size,
+                    appLanguage = appLanguage,
                     onTabSelected = { viewModel.setSelectedTab(it) }
                 )
 
-                // Search Bar ya Kiswahili
-                val placeholderText = if (selectedTab == FeedTab.JOB_SEEKERS) {
-                    "Tafuta mtafuta kazi kwa jina, ujuzi, au eneo..."
-                } else {
-                    "Tafuta kazi kwa cheo, kampuni, au mkoa..."
-                }
-
-                AppSearchBar(
-                    searchQuery = searchQuery,
-                    onSearchChanged = { viewModel.setSearchQuery(it) },
-                    placeholderText = placeholderText
-                )
-
-                // Filter Bar ya Mikoa
+                // Filter Bar ya Mikoa Pekee (Bila Search Bar)
                 LocationAndCategoryFilterBar(
                     selectedLocation = selectedLocation,
+                    appLanguage = appLanguage,
                     onLocationSelected = { viewModel.setSelectedLocation(it) }
                 )
             }
@@ -128,8 +123,8 @@ fun FeedScreen(
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
-                    contentDescription = if (currentUser.role == UserRole.EMPLOYER) "Weka Kazi" else "Weka Wasifu",
-                    modifier = Modifier.size(28.dp)
+                    contentDescription = if (currentUser.role == UserRole.EMPLOYER) AppStrings.postJobOption(appLanguage) else AppStrings.postProfileOption(appLanguage),
+                    modifier = Modifier.size(26.dp)
                 )
             }
         }
@@ -140,7 +135,6 @@ fun FeedScreen(
                 .padding(paddingValues)
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            // AnimatedContent kwa ajili ya Slide Animation kati ya Tab 1 na Tab 2
             AnimatedContent(
                 targetState = selectedTab,
                 transitionSpec = {
@@ -158,18 +152,18 @@ fun FeedScreen(
             ) { targetTab ->
                 when (targetTab) {
                     FeedTab.JOB_SEEKERS -> {
-                        // Orodha ya Watafuta Kazi
+                        // Orodha Safi ya Watafuta Kazi
                         if (profiles.isEmpty()) {
                             EmptyFeedState(
-                                title = "Hakuna Watafuta Kazi Waliopatikana",
-                                subtitle = "Jaribu kubadili maneno ya utafutaji au eneo ulilochagua."
+                                title = AppStrings.emptyProfiles(appLanguage),
+                                subtitle = if (appLanguage == AppLanguage.SWAHILI) "Kuwa wa kwanza kuweka wasifu wako au chagua mkoa mwingine." else "Be the first to post your profile or choose another region."
                             )
                         } else {
                             LazyColumn(
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .testTag("lazy_column_job_seekers"),
-                                contentPadding = PaddingValues(top = 8.dp, bottom = 80.dp)
+                                contentPadding = PaddingValues(top = 4.dp, bottom = 80.dp)
                             ) {
                                 items(
                                     items = profiles,
@@ -177,16 +171,28 @@ fun FeedScreen(
                                 ) { profile ->
                                     JobSeekerCard(
                                         profile = profile,
+                                        appLanguage = appLanguage,
                                         onClick = {
                                             viewModel.selectProfile(profile)
                                             onProfileClick(profile)
                                         },
                                         onContactClick = {
                                             // Piga simu moja kwa moja
-                                            val intent = Intent(Intent.ACTION_DIAL).apply {
-                                                data = Uri.parse("tel:${profile.phone}")
+                                            val phone = profile.phone.ifBlank { profile.email }
+                                            if (phone.isNotBlank()) {
+                                                val intent = Intent(Intent.ACTION_DIAL).apply {
+                                                    data = Uri.parse("tel:$phone")
+                                                }
+                                                try {
+                                                    context.startActivity(intent)
+                                                } catch (e: Exception) {
+                                                    viewModel.selectProfile(profile)
+                                                    onProfileClick(profile)
+                                                }
+                                            } else {
+                                                viewModel.selectProfile(profile)
+                                                onProfileClick(profile)
                                             }
-                                            context.startActivity(intent)
                                         }
                                     )
                                 }
@@ -195,18 +201,18 @@ fun FeedScreen(
                     }
 
                     FeedTab.EMPLOYERS -> {
-                        // Orodha ya Ajira Zote Zilizopo
+                        // Orodha Safi ya Nafasi za Ajira
                         if (jobs.isEmpty()) {
                             EmptyFeedState(
-                                title = "Hakuna Nafasi za Ajira Zilizopatikana",
-                                subtitle = "Kuwa wa kwanza kuweka tangazo la kazi au badili vigezo vya utafutaji."
+                                title = AppStrings.emptyJobs(appLanguage),
+                                subtitle = if (appLanguage == AppLanguage.SWAHILI) "Kuwa wa kwanza kuweka tangazo la kazi au chagua mkoa mwingine." else "Be the first to post a job or choose another region."
                             )
                         } else {
                             LazyColumn(
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .testTag("lazy_column_jobs"),
-                                contentPadding = PaddingValues(top = 8.dp, bottom = 80.dp)
+                                contentPadding = PaddingValues(top = 4.dp, bottom = 80.dp)
                             ) {
                                 items(
                                     items = jobs,
@@ -214,6 +220,7 @@ fun FeedScreen(
                                 ) { job ->
                                     JobCard(
                                         job = job,
+                                        appLanguage = appLanguage,
                                         onClick = {
                                             viewModel.selectJob(job)
                                             onJobClick(job)
@@ -248,23 +255,23 @@ fun EmptyFeedState(
         Surface(
             shape = CircleShape,
             color = Color(0xFFF1F5F9),
-            modifier = Modifier.size(80.dp)
+            modifier = Modifier.size(72.dp)
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(
-                    imageVector = Icons.Default.SearchOff,
+                    imageVector = Icons.Default.WorkOutline,
                     contentDescription = null,
                     tint = NeutralMedium,
-                    modifier = Modifier.size(40.dp)
+                    modifier = Modifier.size(36.dp)
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(14.dp))
 
         Text(
             text = title,
-            fontSize = 17.sp,
+            fontSize = 16.sp,
             fontWeight = FontWeight.Bold,
             color = NeutralDark,
             textAlign = TextAlign.Center

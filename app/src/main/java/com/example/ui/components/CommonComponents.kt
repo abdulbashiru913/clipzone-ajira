@@ -1,8 +1,6 @@
 package com.example.ui.components
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -29,16 +27,12 @@ import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CloudOff
-import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Work
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -46,11 +40,8 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -60,34 +51,37 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.example.data.model.Job
 import com.example.data.model.JobSeekerProfile
 import com.example.ui.theme.BrandAmber
-import com.example.ui.theme.BrandAmberLight
 import com.example.ui.theme.BrandBlue
 import com.example.ui.theme.BrandBlueLight
 import com.example.ui.theme.BrandGreen
 import com.example.ui.theme.BrandGreenDark
 import com.example.ui.theme.BrandGreenLight
-import com.example.ui.theme.BrandGreenSurface
 import com.example.ui.theme.NeutralDark
 import com.example.ui.theme.NeutralMedium
 import com.example.ui.viewmodel.FeedTab
+import com.example.util.AppLanguage
+import com.example.util.AppStrings
 
 /**
- * Header ya Juu ya ClipZone yenye nembo, jina, na kiashiria cha Offline
+ * Header ya Juu ya ClipZone yenye Nembo, Lugha Switcher (SW/EN), na Role
  */
 @Composable
 fun AppTopHeader(
     isOffline: Boolean,
-    onRoleClick: () -> Unit = {},
-    userRoleText: String = "Mtafuta Kazi"
+    appLanguage: AppLanguage = AppLanguage.SWAHILI,
+    onLanguageToggle: () -> Unit = {},
+    userRoleText: String = "Mtafuta Kazi",
+    onRoleClick: () -> Unit = {}
 ) {
     Surface(
         modifier = Modifier
@@ -100,23 +94,21 @@ fun AppTopHeader(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
+                // Logo & Name
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.weight(1f)
                 ) {
-                    // Logo Icon Box
                     Box(
                         modifier = Modifier
-                            .size(42.dp)
-                            .clip(RoundedCornerShape(12.dp))
+                            .size(38.dp)
+                            .clip(RoundedCornerShape(10.dp))
                             .background(
-                                Brush.linearGradient(
-                                    listOf(BrandGreen, BrandGreenDark)
-                                )
+                                Brush.linearGradient(listOf(BrandGreen, BrandGreenDark))
                             ),
                         contentAlignment = Alignment.Center
                     ) {
@@ -124,7 +116,7 @@ fun AppTopHeader(
                             imageVector = Icons.Default.Work,
                             contentDescription = "ClipZone Logo",
                             tint = Color.White,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(22.dp)
                         )
                     }
 
@@ -134,75 +126,106 @@ fun AppTopHeader(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
                                 text = "ClipZone",
-                                fontSize = 19.sp,
+                                fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = BrandGreenDark
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
                                 text = "AJIRA",
-                                fontSize = 17.sp,
+                                fontSize = 16.sp,
                                 fontWeight = FontWeight.Black,
                                 color = BrandAmber
                             )
                         }
                         Text(
-                            text = "Ungana na Fursa za Tanzania",
-                            fontSize = 11.sp,
+                            text = AppStrings.appTagline(appLanguage),
+                            fontSize = 10.sp,
                             color = NeutralMedium,
-                            fontWeight = FontWeight.Medium
+                            fontWeight = FontWeight.Medium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 }
 
-                // Role badge or Profile Chip
-                Surface(
-                    shape = RoundedCornerShape(20.dp),
-                    color = BrandGreenLight,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(20.dp))
-                        .clickable { onRoleClick() }
+                // Language Switcher & Role Badges
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                    // Language Switcher Button (e.g. 🇹🇿 SW / 🇬🇧 EN)
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = Color(0xFFF1F5F9),
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(16.dp))
+                            .clickable { onLanguageToggle() }
+                            .testTag("language_toggle_button")
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = "User Role",
-                            tint = BrandGreenDark,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = userRoleText,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = BrandGreenDark
-                        )
+                        Row(
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = if (appLanguage == AppLanguage.SWAHILI) "🇹🇿 SW" else "🇬🇧 EN",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = NeutralDark
+                            )
+                        }
+                    }
+
+                    // Role Badge
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = BrandGreenLight,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(16.dp))
+                            .clickable { onRoleClick() }
+                            .testTag("user_role_badge")
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = null,
+                                tint = BrandGreenDark,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(3.dp))
+                            Text(
+                                text = userRoleText,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = BrandGreenDark
+                            )
+                        }
                     }
                 }
             }
 
-            // Offline status warning banner if internet is disconnected
+            // Offline status warning banner
             if (isOffline) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(Color(0xFFFFF3CD))
-                        .padding(horizontal = 16.dp, vertical = 6.dp),
+                        .padding(horizontal = 16.dp, vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
                         imageVector = Icons.Default.CloudOff,
                         contentDescription = "Offline Mode",
                         tint = Color(0xFF856404),
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(14.dp)
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "Hali ya Nje ya Mtandao (Offline Cache inatumika)",
-                        fontSize = 12.sp,
+                        text = if (appLanguage == AppLanguage.SWAHILI) "Hali ya Nje ya Mtandao (Offline Cache)" else "Offline Mode (Local Cache Active)",
+                        fontSize = 11.sp,
                         color = Color(0xFF856404),
                         fontWeight = FontWeight.Medium
                     )
@@ -213,32 +236,33 @@ fun AppTopHeader(
 }
 
 /**
- * TabButton 2 Kubwa Juu: "WATAFUTA KAZI" na "WAJIRI"
+ * TabButton 2 Kubwa: "WATAFUTA KAZI" na "WAJIRI" (Bilingual)
  */
 @Composable
 fun FeedTabSelector(
     selectedTab: FeedTab,
     jobSeekersCount: Int,
     employersCount: Int,
+    appLanguage: AppLanguage = AppLanguage.SWAHILI,
     onTabSelected: (FeedTab) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .padding(horizontal = 16.dp, vertical = 6.dp)
             .testTag("feed_tab_selector"),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(14.dp),
         color = Color(0xFFE2E8F0)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(4.dp)
-                .height(48.dp),
+                .padding(3.dp)
+                .height(44.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Tab 1: WATAFUTA KAZI
+            // Tab 1: WATAFUTA KAZI / JOB SEEKERS
             val isTab1Selected = selectedTab == FeedTab.JOB_SEEKERS
             val tab1Bg by animateColorAsState(
                 targetValue = if (isTab1Selected) BrandGreen else Color.Transparent,
@@ -253,7 +277,7 @@ fun FeedTabSelector(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()
-                    .clip(RoundedCornerShape(12.dp))
+                    .clip(RoundedCornerShape(11.dp))
                     .background(tab1Bg)
                     .clickable { onTabSelected(FeedTab.JOB_SEEKERS) }
                     .testTag("tab_job_seekers"),
@@ -265,36 +289,36 @@ fun FeedTabSelector(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Person,
-                        contentDescription = "Watafuta Kazi",
+                        contentDescription = null,
                         tint = tab1TextColor,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(16.dp)
                     )
-                    Spacer(modifier = Modifier.width(6.dp))
+                    Spacer(modifier = Modifier.width(5.dp))
                     Text(
-                        text = "WATAFUTA KAZI",
-                        fontSize = 13.sp,
+                        text = AppStrings.tabJobSeekers(appLanguage),
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.ExtraBold,
                         color = tab1TextColor
                     )
                     if (jobSeekersCount > 0) {
-                        Spacer(modifier = Modifier.width(6.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
                         Surface(
                             shape = CircleShape,
                             color = if (isTab1Selected) Color.White.copy(alpha = 0.25f) else Color(0xFFCBD5E1)
                         ) {
                             Text(
                                 text = "$jobSeekersCount",
-                                fontSize = 11.sp,
+                                fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = tab1TextColor,
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)
                             )
                         }
                     }
                 }
             }
 
-            // Tab 2: WAJIRI (Kazi zote zilizopo)
+            // Tab 2: WAJIRI / EMPLOYERS
             val isTab2Selected = selectedTab == FeedTab.EMPLOYERS
             val tab2Bg by animateColorAsState(
                 targetValue = if (isTab2Selected) BrandGreen else Color.Transparent,
@@ -309,7 +333,7 @@ fun FeedTabSelector(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()
-                    .clip(RoundedCornerShape(12.dp))
+                    .clip(RoundedCornerShape(11.dp))
                     .background(tab2Bg)
                     .clickable { onTabSelected(FeedTab.EMPLOYERS) }
                     .testTag("tab_employers"),
@@ -321,29 +345,29 @@ fun FeedTabSelector(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Business,
-                        contentDescription = "Wajiri",
+                        contentDescription = null,
                         tint = tab2TextColor,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(16.dp)
                     )
-                    Spacer(modifier = Modifier.width(6.dp))
+                    Spacer(modifier = Modifier.width(5.dp))
                     Text(
-                        text = "WAJIRI",
-                        fontSize = 13.sp,
+                        text = AppStrings.tabEmployers(appLanguage),
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.ExtraBold,
                         color = tab2TextColor
                     )
                     if (employersCount > 0) {
-                        Spacer(modifier = Modifier.width(6.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
                         Surface(
                             shape = CircleShape,
                             color = if (isTab2Selected) Color.White.copy(alpha = 0.25f) else Color(0xFFCBD5E1)
                         ) {
                             Text(
                                 text = "$employersCount",
-                                fontSize = 11.sp,
+                                fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = tab2TextColor,
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)
                             )
                         }
                     }
@@ -354,72 +378,36 @@ fun FeedTabSelector(
 }
 
 /**
- * SearchBar ya kutafuta kwa Cheo au Jina
- */
-@Composable
-fun AppSearchBar(
-    searchQuery: String,
-    onSearchChanged: (String) -> Unit,
-    placeholderText: String,
-    modifier: Modifier = Modifier
-) {
-    OutlinedTextField(
-        value = searchQuery,
-        onValueChange = onSearchChanged,
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp)
-            .testTag("search_bar_input"),
-        placeholder = {
-            Text(
-                text = placeholderText,
-                fontSize = 14.sp,
-                color = NeutralMedium
-            )
-        },
-        leadingIcon = {
-            Icon(
-                imageVector = Icons.Default.Search,
-                contentDescription = "Tafuta",
-                tint = BrandGreen
-            )
-        },
-        singleLine = true,
-        shape = RoundedCornerShape(14.dp),
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = BrandGreen,
-            unfocusedBorderColor = Color(0xFFCBD5E1),
-            focusedContainerColor = Color.White,
-            unfocusedContainerColor = Color.White
-        )
-    )
-}
-
-/**
- * Filter Chips kwa ajili ya Mikoa na Kada
+ * Filter Chips ya Mikoa (Minimal & Quick)
  */
 @Composable
 fun LocationAndCategoryFilterBar(
     selectedLocation: String,
-    onLocationSelected: (String) -> Unit,
-    locations: List<String> = listOf("Mikoa Yote", "Dar es Salaam", "Arusha", "Dodoma", "Mwanza", "Mbeya", "Morogoro", "Tanga")
+    appLanguage: AppLanguage = AppLanguage.SWAHILI,
+    onLocationSelected: (String) -> Unit
 ) {
+    val allLabel = AppStrings.allLocations(appLanguage)
+    val locations = listOf(allLabel) + AppStrings.TANZANIA_REGIONS
+
     LazyRow(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+            .padding(vertical = 2.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
         contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp)
     ) {
         items(locations) { loc ->
-            val isSelected = selectedLocation == loc
+            val isSelected = (selectedLocation == "Mikoa Yote" && loc == allLabel) ||
+                    (selectedLocation == "All Regions" && loc == allLabel) ||
+                    (selectedLocation == loc)
+
             FilterChip(
                 selected = isSelected,
-                onClick = { onLocationSelected(loc) },
+                onClick = { onLocationSelected(if (loc == allLabel) "Mikoa Yote" else loc) },
                 label = {
                     Text(
                         text = loc,
-                        fontSize = 12.sp,
+                        fontSize = 11.sp,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                     )
                 },
@@ -428,7 +416,7 @@ fun LocationAndCategoryFilterBar(
                         Icon(
                             imageVector = Icons.Default.CheckCircle,
                             contentDescription = null,
-                            modifier = Modifier.size(14.dp),
+                            modifier = Modifier.size(12.dp),
                             tint = BrandGreenDark
                         )
                     }
@@ -443,12 +431,13 @@ fun LocationAndCategoryFilterBar(
 }
 
 /**
- * Kadi ya Mtafuta Kazi: Jina, Picha, Ujuzi, Mkoa, Button "Wasiliana"
+ * Kadi Safi na Rahisi ya Mtafuta Kazi (Minimal & Essential Only)
+ * Inajumuisha Picha ya Wasifu (Image/Avatar), Jina, Ujuzi/Kazi, Eneo na Kitufe cha Kuwasiliana
  */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun JobSeekerCard(
     profile: JobSeekerProfile,
+    appLanguage: AppLanguage = AppLanguage.SWAHILI,
     onClick: () -> Unit,
     onContactClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -456,28 +445,36 @@ fun JobSeekerCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 6.dp)
+            .padding(horizontal = 16.dp, vertical = 5.dp)
             .clickable { onClick() }
             .testTag("job_seeker_card_${profile.id}"),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.5.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Avatar Box yenye initial au picha
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Avatar / Profile Photo
+            if (profile.avatarUrl.isNotBlank()) {
+                AsyncImage(
+                    model = profile.avatarUrl,
+                    contentDescription = profile.fullName,
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .border(1.5.dp, BrandGreen, CircleShape),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
                 Box(
                     modifier = Modifier
-                        .size(52.dp)
+                        .size(48.dp)
                         .clip(CircleShape)
-                        .background(
-                            Brush.linearGradient(
-                                listOf(BrandGreenLight, Color(0xFFC8E6C9))
-                            )
-                        )
+                        .background(Brush.linearGradient(listOf(BrandGreenLight, Color(0xFFC8E6C9))))
                         .border(1.5.dp, BrandGreen, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
@@ -489,149 +486,98 @@ fun JobSeekerCard(
 
                     Text(
                         text = initials,
-                        fontSize = 18.sp,
+                        fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         color = BrandGreenDark
                     )
                 }
-
-                Spacer(modifier = Modifier.width(12.dp))
-
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = profile.fullName,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = NeutralDark,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Text(
-                        text = profile.title,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = BrandGreen,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(top = 2.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.LocationOn,
-                            contentDescription = "Eneo",
-                            tint = NeutralMedium,
-                            modifier = Modifier.size(14.dp)
-                        )
-                        Spacer(modifier = Modifier.width(2.dp))
-                        Text(
-                            text = profile.location,
-                            fontSize = 12.sp,
-                            color = NeutralMedium
-                        )
-                    }
-                }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.width(12.dp))
 
-            // Ujuzi / Skills Chips
-            if (profile.skills.isNotEmpty()) {
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                    maxItemsInEachRow = 3
-                ) {
-                    profile.skills.take(4).forEach { skill ->
-                        Surface(
-                            shape = RoundedCornerShape(8.dp),
-                            color = Color(0xFFF1F5F9)
-                        ) {
-                            Text(
-                                text = "• $skill",
-                                fontSize = 11.sp,
-                                color = Color(0xFF334155),
-                                fontWeight = FontWeight.Medium,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                            )
-                        }
-                    }
-                }
-                Spacer(modifier = Modifier.height(10.dp))
-            }
-
-            // Uzoefu & Mshahara
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Surface(
-                    shape = RoundedCornerShape(6.dp),
-                    color = BrandBlueLight
-                ) {
-                    Text(
-                        text = profile.availability,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = BrandBlue,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                    )
-                }
-
-                if (profile.salaryExpectation.isNotBlank()) {
-                    Text(
-                        text = profile.salaryExpectation,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = BrandAmber
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Button "Wasiliana" & "Angalia Wasifu"
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                OutlinedButton(
-                    onClick = onClick,
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = BrandGreen)
-                ) {
-                    Text(text = "Angalia Wasifu", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                }
-
-                Button(
-                    onClick = onContactClick,
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = BrandGreen)
+            // Details: Name, Title, Location & Status
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = profile.fullName,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = NeutralDark,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = profile.title,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = BrandGreenDark,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(top = 2.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Call,
-                        contentDescription = "Piga Simu",
-                        modifier = Modifier.size(16.dp),
-                        tint = Color.White
+                        imageVector = Icons.Default.LocationOn,
+                        contentDescription = null,
+                        tint = NeutralMedium,
+                        modifier = Modifier.size(12.dp)
                     )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(text = "Wasiliana", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    Spacer(modifier = Modifier.width(2.dp))
+                    Text(
+                        text = profile.location,
+                        fontSize = 11.sp,
+                        color = NeutralMedium,
+                        maxLines = 1
+                    )
+                    if (profile.availability.isNotBlank()) {
+                        Text(
+                            text = " • ${profile.availability}",
+                            fontSize = 11.sp,
+                            color = BrandBlue,
+                            fontWeight = FontWeight.Medium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 }
+            }
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            // Minimal Contact Button
+            Button(
+                onClick = onContactClick,
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = BrandGreen),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Call,
+                    contentDescription = null,
+                    modifier = Modifier.size(14.dp),
+                    tint = Color.White
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = AppStrings.contact(appLanguage),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
             }
         }
     }
 }
 
 /**
- * Kadi ya Ajira: Cheo, Kampuni, Mkoa, Mshahara, Button "Tuma Maombi"
+ * Kadi Safi na Rahisi ya Kazi (Minimal & Essential Only)
+ * Inajumuisha Cheo, Kampuni/Mwajiri, Eneo, Malipo, na Kitufe cha Kuomba
  */
 @Composable
 fun JobCard(
     job: Job,
+    appLanguage: AppLanguage = AppLanguage.SWAHILI,
     onClick: () -> Unit,
     onApplyClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -639,144 +585,105 @@ fun JobCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 6.dp)
+            .padding(horizontal = 16.dp, vertical = 5.dp)
             .clickable { onClick() }
             .testTag("job_card_${job.id}"),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.5.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            // Cheo na Badge ya Aina ya Kazi
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Job Brief Icon / Details
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(BrandGreenLight),
+                contentAlignment = Alignment.Center
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = job.jobTitle,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = NeutralDark,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.Business,
-                            contentDescription = "Kampuni",
-                            tint = BrandGreen,
-                            modifier = Modifier.size(15.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = job.company,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = BrandGreenDark
-                        )
-                    }
-                }
-
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = BrandGreenLight
-                ) {
-                    Text(
-                        text = job.jobType,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = BrandGreenDark,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // Mkoa na Mshahara
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.LocationOn,
-                        contentDescription = "Mkoa",
-                        tint = NeutralMedium,
-                        modifier = Modifier.size(15.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = job.location,
-                        fontSize = 12.sp,
-                        color = NeutralMedium
-                    )
-                }
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.Payments,
-                        contentDescription = "Mshahara",
-                        tint = BrandAmber,
-                        modifier = Modifier.size(15.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = job.salary,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = BrandAmber
-                    )
-                }
-            }
-
-            if (job.description.isNotBlank()) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = job.description,
-                    fontSize = 12.sp,
-                    color = Color(0xFF475569),
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    lineHeight = 16.sp
+                Icon(
+                    imageVector = Icons.Default.Work,
+                    contentDescription = null,
+                    tint = BrandGreenDark,
+                    modifier = Modifier.size(22.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.width(12.dp))
 
-            // Actions: Maelezo Zaidi & Tuma Maombi
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                OutlinedButton(
-                    onClick = onClick,
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = BrandGreen)
-                ) {
-                    Text(text = "Maelezo Kamili", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                }
-
-                Button(
-                    onClick = onApplyClick,
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = BrandGreen)
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = job.jobTitle,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = NeutralDark,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = job.company,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = BrandGreenDark,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(top = 2.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Send,
-                        contentDescription = "Tuma Maombi",
-                        modifier = Modifier.size(16.dp),
-                        tint = Color.White
+                        imageVector = Icons.Default.LocationOn,
+                        contentDescription = null,
+                        tint = NeutralMedium,
+                        modifier = Modifier.size(12.dp)
                     )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(text = "Tuma Maombi", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    Spacer(modifier = Modifier.width(2.dp))
+                    Text(
+                        text = job.location,
+                        fontSize = 11.sp,
+                        color = NeutralMedium
+                    )
+                    if (job.salary.isNotBlank()) {
+                        Text(
+                            text = " • ${job.salary}",
+                            fontSize = 11.sp,
+                            color = BrandAmber,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 }
+            }
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            // Minimal Apply / Details Button
+            Button(
+                onClick = onApplyClick,
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = BrandGreen),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Send,
+                    contentDescription = null,
+                    modifier = Modifier.size(13.dp),
+                    tint = Color.White
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = AppStrings.applyNow(appLanguage),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
             }
         }
     }

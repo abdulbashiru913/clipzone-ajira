@@ -1,6 +1,9 @@
 package com.example.ui.screens
 
+import android.net.Uri
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -16,27 +19,32 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.Business
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.HelpOutline
-import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.Policy
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Security
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.Work
 import androidx.compose.material3.AlertDialog
@@ -47,6 +55,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -70,12 +79,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.example.data.model.AppNotification
 import com.example.data.model.UserRole
 import com.example.ui.theme.BrandAmber
@@ -87,15 +98,18 @@ import com.example.ui.theme.BrandGreenLight
 import com.example.ui.theme.NeutralDark
 import com.example.ui.theme.NeutralMedium
 import com.example.ui.viewmodel.AjiraViewModel
+import com.example.util.AppLanguage
+import com.example.util.AppStrings
 
 /**
- * Screen ya Arifa (Notifications)
+ * Screen ya Arifa (Notifications) yenye Lugha 2
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotificationsScreen(
     viewModel: AjiraViewModel
 ) {
+    val appLanguage by viewModel.appLanguage.collectAsState()
     val notifications by viewModel.notifications.collectAsState()
 
     Scaffold(
@@ -103,7 +117,7 @@ fun NotificationsScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Arifa & Taarifa",
+                        text = AppStrings.notifications(appLanguage),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
@@ -123,7 +137,7 @@ fun NotificationsScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "Hakuna arifa mpya kwa sasa.",
+                    text = AppStrings.noNotifications(appLanguage),
                     color = NeutralMedium,
                     fontSize = 14.sp
                 )
@@ -210,7 +224,7 @@ fun NotificationItemCard(notification: AppNotification) {
 }
 
 /**
- * Screen ya Wasifu Wangu & Mipangilio (My Profile & Direct User Details)
+ * Screen ya Wasifu Wangu & Mipangilio (My Profile with Image Upload & Language Switcher)
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -218,6 +232,7 @@ fun MyProfileScreen(
     viewModel: AjiraViewModel,
     onLoginClick: () -> Unit = {}
 ) {
+    val appLanguage by viewModel.appLanguage.collectAsState()
     val currentUser by viewModel.currentUser.collectAsState()
     val isOffline by viewModel.isOfflineMode.collectAsState()
     val context = LocalContext.current
@@ -229,7 +244,17 @@ fun MyProfileScreen(
     var location by remember(currentUser.location) { mutableStateOf(currentUser.location) }
     var profession by remember(currentUser.profession) { mutableStateOf(currentUser.profession) }
     var bio by remember(currentUser.bio) { mutableStateOf(currentUser.bio) }
+    var avatarUrl by remember(currentUser.avatarUrl) { mutableStateOf(currentUser.avatarUrl) }
     var selectedRole by remember(currentUser.role) { mutableStateOf(currentUser.role) }
+
+    // Image Picker Launcher
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            avatarUrl = it.toString()
+        }
+    }
 
     // Privacy & Terms dialog
     var showPrivacyDialog by remember { mutableStateOf(false) }
@@ -240,7 +265,7 @@ fun MyProfileScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Wasifu na Taarifa Zangu",
+                        text = AppStrings.profile(appLanguage),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
@@ -260,7 +285,7 @@ fun MyProfileScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp)
         ) {
-            // Header Profile Card
+            // Header Profile Card with Avatar & Image Upload
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(18.dp),
@@ -271,25 +296,113 @@ fun MyProfileScreen(
                     modifier = Modifier.padding(20.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    // Profile Image with Camera overlay icon
                     Box(
-                        modifier = Modifier
-                            .size(72.dp)
-                            .clip(CircleShape)
-                            .background(
-                                Brush.linearGradient(listOf(BrandGreenLight, Color(0xFFC8E6C9)))
-                            )
-                            .border(2.dp, BrandGreen, CircleShape),
-                        contentAlignment = Alignment.Center
+                        contentAlignment = Alignment.BottomEnd,
+                        modifier = Modifier.size(90.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = null,
-                            tint = BrandGreenDark,
-                            modifier = Modifier.size(40.dp)
-                        )
+                        if (avatarUrl.isNotBlank()) {
+                            AsyncImage(
+                                model = avatarUrl,
+                                contentDescription = "Profile Photo",
+                                modifier = Modifier
+                                    .size(90.dp)
+                                    .clip(CircleShape)
+                                    .border(2.5.dp, BrandGreen, CircleShape)
+                                    .clickable { imagePickerLauncher.launch("image/*") },
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            Box(
+                                modifier = Modifier
+                                    .size(90.dp)
+                                    .clip(CircleShape)
+                                    .background(
+                                        Brush.linearGradient(listOf(BrandGreenLight, Color(0xFFC8E6C9)))
+                                    )
+                                    .border(2.5.dp, BrandGreen, CircleShape)
+                                    .clickable { imagePickerLauncher.launch("image/*") },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Person,
+                                    contentDescription = null,
+                                    tint = BrandGreenDark,
+                                    modifier = Modifier.size(50.dp)
+                                )
+                            }
+                        }
+
+                        // Upload Camera Floating Badge
+                        Surface(
+                            shape = CircleShape,
+                            color = BrandGreenDark,
+                            shadowElevation = 3.dp,
+                            modifier = Modifier
+                                .size(30.dp)
+                                .clip(CircleShape)
+                                .clickable { imagePickerLauncher.launch("image/*") }
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = Icons.Default.PhotoCamera,
+                                    contentDescription = "Upload Photo",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(10.dp))
+
+                    // Buttons to Choose or Remove Image
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        OutlinedButton(
+                            onClick = { imagePickerLauncher.launch("image/*") },
+                            shape = RoundedCornerShape(8.dp),
+                            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp, vertical = 4.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.AddPhotoAlternate,
+                                contentDescription = null,
+                                modifier = Modifier.size(14.dp),
+                                tint = BrandGreenDark
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = if (avatarUrl.isBlank()) AppStrings.uploadPhoto(appLanguage) else AppStrings.changePhoto(appLanguage),
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = BrandGreenDark
+                            )
+                        }
+
+                        if (avatarUrl.isNotBlank()) {
+                            TextButton(
+                                onClick = { avatarUrl = "" },
+                                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(14.dp),
+                                    tint = Color.Red
+                                )
+                                Spacer(modifier = Modifier.width(2.dp))
+                                Text(
+                                    text = AppStrings.removePhoto(appLanguage),
+                                    fontSize = 11.sp,
+                                    color = Color.Red
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
                         text = fullName.ifBlank { "Mtumiaji wa ClipZone" },
@@ -335,7 +448,7 @@ fun MyProfileScreen(
                         color = BrandGreenLight
                     ) {
                         Text(
-                            text = "Hali: ${selectedRole.displayNameSwahili}",
+                            text = "${AppStrings.role(appLanguage)}: ${selectedRole.getDisplayName(appLanguage)}",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             color = BrandGreenDark,
@@ -345,7 +458,85 @@ fun MyProfileScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Language Selection Card (Lugha: Swahili / English)
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Language,
+                                contentDescription = null,
+                                tint = BrandGreen,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column {
+                                Text(
+                                    text = AppStrings.language(appLanguage),
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = NeutralDark
+                                )
+                                Text(
+                                    text = if (appLanguage == AppLanguage.SWAHILI) "Kiswahili (Tanzania)" else "English (Global)",
+                                    fontSize = 12.sp,
+                                    color = NeutralMedium
+                                )
+                            }
+                        }
+
+                        // Toggle Buttons for Language
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = if (appLanguage == AppLanguage.SWAHILI) BrandGreen else Color(0xFFE2E8F0),
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .clickable { viewModel.setAppLanguage(AppLanguage.SWAHILI) }
+                            ) {
+                                Text(
+                                    text = "🇹🇿 Swahili",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (appLanguage == AppLanguage.SWAHILI) Color.White else NeutralDark,
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                                )
+                            }
+
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = if (appLanguage == AppLanguage.ENGLISH) BrandGreen else Color(0xFFE2E8F0),
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .clickable { viewModel.setAppLanguage(AppLanguage.ENGLISH) }
+                            ) {
+                                Text(
+                                    text = "🇬🇧 English",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (appLanguage == AppLanguage.ENGLISH) Color.White else NeutralDark,
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
 
             // Switch Role Card ("Natafuta Kazi" vs "Ninaajiri")
             Card(
@@ -370,13 +561,13 @@ fun MyProfileScreen(
                             Spacer(modifier = Modifier.width(10.dp))
                             Column {
                                 Text(
-                                    text = "Jukumu Lako Kuu",
+                                    text = AppStrings.role(appLanguage),
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = NeutralDark
                                 )
                                 Text(
-                                    text = if (selectedRole == UserRole.JOB_SEEKER) "Natafuta Kazi / Ajira" else "Ninaajiri (Mwajiri / Kampuni)",
+                                    text = selectedRole.getDisplayName(appLanguage),
                                     fontSize = 12.sp,
                                     color = NeutralMedium
                                 )
@@ -399,7 +590,7 @@ fun MyProfileScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             // FOMU YA KUJAZA / KUBADILI TAARIFA (DIRECT PROFILE EDITOR)
             Card(
@@ -418,7 +609,7 @@ fun MyProfileScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Taarifa Zangu za Mawasiliano",
+                            text = if (appLanguage == AppLanguage.SWAHILI) "Taarifa Zangu za Wasifu" else "My Profile Information",
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
                             color = NeutralDark
@@ -426,7 +617,7 @@ fun MyProfileScreen(
                     }
 
                     Text(
-                        text = "Weka taarifa zako hapa ili zitumike moja kwa moja unapoweka kazi au kutafuta ajira.",
+                        text = if (appLanguage == AppLanguage.SWAHILI) "Weka taarifa zako hapa ili zitumike moja kwa moja unapoweka kazi au kutafuta ajira." else "Enter your information here to auto-fill your job or profile posts.",
                         fontSize = 12.sp,
                         color = NeutralMedium,
                         modifier = Modifier.padding(top = 4.dp, bottom = 14.dp)
@@ -436,8 +627,8 @@ fun MyProfileScreen(
                     OutlinedTextField(
                         value = fullName,
                         onValueChange = { fullName = it },
-                        label = { Text("Jina Lako Kamili") },
-                        placeholder = { Text("Mfano: Abdul Bashiru") },
+                        label = { Text(AppStrings.fullName(appLanguage)) },
+                        placeholder = { Text(if (appLanguage == AppLanguage.SWAHILI) "Mfano: Abdul Bashiru" else "e.g. John Doe") },
                         leadingIcon = { Icon(Icons.Default.Person, contentDescription = null, tint = BrandGreen) },
                         singleLine = true,
                         modifier = Modifier
@@ -456,7 +647,7 @@ fun MyProfileScreen(
                     OutlinedTextField(
                         value = phoneNumber,
                         onValueChange = { phoneNumber = it },
-                        label = { Text("Nambari ya Simu ya Kupigiwa / WhatsApp") },
+                        label = { Text(AppStrings.phoneNumber(appLanguage)) },
                         placeholder = { Text("+255 7XX XXX XXX") },
                         leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null, tint = BrandGreen) },
                         singleLine = true,
@@ -477,8 +668,8 @@ fun MyProfileScreen(
                     OutlinedTextField(
                         value = email,
                         onValueChange = { email = it },
-                        label = { Text("Barua Pepe (Email) - Sio Lazima") },
-                        placeholder = { Text("mfano@gmail.com") },
+                        label = { Text(AppStrings.email(appLanguage)) },
+                        placeholder = { Text("example@gmail.com") },
                         leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = BrandGreen) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
@@ -498,8 +689,8 @@ fun MyProfileScreen(
                     OutlinedTextField(
                         value = location,
                         onValueChange = { location = it },
-                        label = { Text("Mkoa / Eneo Unapoishi") },
-                        placeholder = { Text("Mfano: Dar es Salaam, Kinondoni") },
+                        label = { Text(AppStrings.location(appLanguage)) },
+                        placeholder = { Text(if (appLanguage == AppLanguage.SWAHILI) "Mfano: Dar es Salaam, Kinondoni" else "e.g. Dar es Salaam") },
                         leadingIcon = { Icon(Icons.Default.LocationOn, contentDescription = null, tint = BrandGreen) },
                         singleLine = true,
                         modifier = Modifier
@@ -512,14 +703,35 @@ fun MyProfileScreen(
                         )
                     )
 
+                    // Orodha ya Mikoa ya Tanzania
+                    LazyRow(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        items(AppStrings.TANZANIA_REGIONS) { reg ->
+                            val isSelected = location.contains(reg, ignoreCase = true)
+                            FilterChip(
+                                selected = isSelected,
+                                onClick = { location = reg },
+                                label = { Text(reg, fontSize = 11.sp) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = BrandGreenLight,
+                                    selectedLabelColor = BrandGreenDark
+                                )
+                            )
+                        }
+                    }
+
                     Spacer(modifier = Modifier.height(10.dp))
 
                     // Taaluma au Biashara
                     OutlinedTextField(
                         value = profession,
                         onValueChange = { profession = it },
-                        label = { Text("Taaluma Yako au Jina la Biashara") },
-                        placeholder = { Text("Mfano: Dereva wa Malori, Mhasibu, Fundi Umeme") },
+                        label = { Text(AppStrings.jobTitle(appLanguage)) },
+                        placeholder = { Text(if (appLanguage == AppLanguage.SWAHILI) "Mfano: Dereva wa Malori, Mhasibu, Fundi Umeme" else "e.g. Driver, Accountant, Electrician") },
                         leadingIcon = { Icon(Icons.Default.Work, contentDescription = null, tint = BrandGreen) },
                         singleLine = true,
                         modifier = Modifier
@@ -538,8 +750,8 @@ fun MyProfileScreen(
                     OutlinedTextField(
                         value = bio,
                         onValueChange = { bio = it },
-                        label = { Text("Kuhusu Wewe / Maelezo ya Ziada") },
-                        placeholder = { Text("Eleza uzoefu au huduma unazotoa...") },
+                        label = { Text(AppStrings.bio(appLanguage)) },
+                        placeholder = { Text(if (appLanguage == AppLanguage.SWAHILI) "Eleza uzoefu au huduma unazotoa..." else "Describe your experience or services...") },
                         leadingIcon = { Icon(Icons.Default.Description, contentDescription = null, tint = BrandGreen) },
                         maxLines = 3,
                         modifier = Modifier
@@ -563,9 +775,14 @@ fun MyProfileScreen(
                                 location = location.trim(),
                                 profession = profession.trim(),
                                 bio = bio.trim(),
+                                avatarUrl = avatarUrl.trim(),
                                 role = selectedRole
                             )
-                            Toast.makeText(context, "Taarifa zako zimehifadhiwa kikamilifu!", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(
+                                context,
+                                if (appLanguage == AppLanguage.SWAHILI) "Taarifa zako zimehifadhiwa kikamilifu!" else "Profile saved successfully!",
+                                Toast.LENGTH_SHORT
+                            ).show()
                         },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -579,12 +796,12 @@ fun MyProfileScreen(
                     ) {
                         Icon(imageVector = Icons.Default.Save, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(text = "Hifadhi Taarifa Zangu", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        Text(text = AppStrings.save(appLanguage), fontWeight = FontWeight.Bold, fontSize = 14.sp)
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             // Taarifa za App & Play Store Readiness
             Card(
@@ -595,7 +812,7 @@ fun MyProfileScreen(
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = "Kuhusu ClipZone Ajira",
+                        text = if (appLanguage == AppLanguage.SWAHILI) "Kuhusu ClipZone Ajira" else "About ClipZone Ajira",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         color = NeutralDark
@@ -606,7 +823,7 @@ fun MyProfileScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(text = "Toleo la App", fontSize = 13.sp, color = NeutralMedium)
+                        Text(text = if (appLanguage == AppLanguage.SWAHILI) "Toleo la App" else "App Version", fontSize = 13.sp, color = NeutralMedium)
                         Text(text = "v1.0.0 (Play Store Ready)", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = BrandGreenDark)
                     }
 
@@ -630,9 +847,13 @@ fun MyProfileScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(text = "Hali ya Mtandao", fontSize = 13.sp, color = NeutralMedium)
+                        Text(text = if (appLanguage == AppLanguage.SWAHILI) "Hali ya Mtandao" else "Network Status", fontSize = 13.sp, color = NeutralMedium)
                         Text(
-                            text = if (isOffline) "Nje ya Mtandao (Offline Cache)" else "Moja kwa Moja (Live Firestore)",
+                            text = if (isOffline) {
+                                if (appLanguage == AppLanguage.SWAHILI) "Nje ya Mtandao (Offline Cache)" else "Offline (Local Cache)"
+                            } else {
+                                if (appLanguage == AppLanguage.SWAHILI) "Moja kwa Moja (Live Firestore)" else "Online (Live Firestore)"
+                            },
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
                             color = if (isOffline) BrandAmber else BrandGreen
@@ -641,7 +862,7 @@ fun MyProfileScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             // Sera ya Faragha na Vigezo (Play Store Compliance)
             Row(
@@ -655,7 +876,7 @@ fun MyProfileScreen(
                 ) {
                     Icon(imageVector = Icons.Default.Policy, contentDescription = null, modifier = Modifier.size(16.dp), tint = BrandGreen)
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = "Sera ya Faragha", fontSize = 12.sp, color = BrandGreen, fontWeight = FontWeight.Bold)
+                    Text(text = AppStrings.privacyPolicy(appLanguage), fontSize = 12.sp, color = BrandGreen, fontWeight = FontWeight.Bold)
                 }
 
                 OutlinedButton(
@@ -665,7 +886,7 @@ fun MyProfileScreen(
                 ) {
                     Icon(imageVector = Icons.Default.Security, contentDescription = null, modifier = Modifier.size(16.dp), tint = NeutralDark)
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = "Vigezo & Masharti", fontSize = 12.sp, color = NeutralDark, fontWeight = FontWeight.Bold)
+                    Text(text = AppStrings.termsOfService(appLanguage), fontSize = 12.sp, color = NeutralDark, fontWeight = FontWeight.Bold)
                 }
             }
 
@@ -679,7 +900,7 @@ fun MyProfileScreen(
             onDismissRequest = { showPrivacyDialog = false },
             title = {
                 Text(
-                    text = "Sera ya Faragha (Privacy Policy)",
+                    text = AppStrings.privacyPolicy(appLanguage),
                     fontWeight = FontWeight.Bold,
                     fontSize = 17.sp,
                     color = BrandGreenDark
@@ -688,10 +909,17 @@ fun MyProfileScreen(
             text = {
                 Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                     Text(
-                        text = "ClipZone Ajira inaheshimu faragha ya watumiaji wote:\n\n" +
-                                "1. Taarifa kama Jina, Namba ya Simu, na Mahali unapoishi zinatumika kuwawezesha waajiri na watafuta kazi kuwasiliana moja kwa moja.\n\n" +
-                                "2. Hatushiriki taarifa zako za siri na wahusika wengine wasiohusika na shughuli za ajira.\n\n" +
-                                "3. Hakuna ulazima wa kutumia nywila (passwords) au kadi za benki; huduma zote za msingi ni rahisi na wazi kwa kila Mtanzania.",
+                        text = if (appLanguage == AppLanguage.SWAHILI) {
+                            "ClipZone Ajira inaheshimu faragha ya watumiaji wote:\n\n" +
+                                    "1. Taarifa kama Jina, Namba ya Simu, Picha na Mahali unapoishi zinatumika kuwawezesha waajiri na watafuta kazi kuwasiliana moja kwa moja.\n\n" +
+                                    "2. Hatushiriki taarifa zako za siri na wahusika wengine wasiohusika na shughuli za ajira.\n\n" +
+                                    "3. Hakuna ulazima wa kutumia nywila (passwords) au kadi za benki; huduma zote za msingi ni rahisi na wazi kwa kila mtu."
+                        } else {
+                            "ClipZone Ajira respects the privacy of all users:\n\n" +
+                                    "1. Information such as Name, Phone Number, Photo, and Location are used solely to connect job seekers and employers directly.\n\n" +
+                                    "2. We do not sell or share your private information with third parties.\n\n" +
+                                    "3. No passwords or credit cards are required; basic services are open and accessible to all."
+                        },
                         fontSize = 13.sp,
                         color = NeutralDark,
                         lineHeight = 18.sp
@@ -700,7 +928,7 @@ fun MyProfileScreen(
             },
             confirmButton = {
                 TextButton(onClick = { showPrivacyDialog = false }) {
-                    Text("Nimeelewa", fontWeight = FontWeight.Bold, color = BrandGreen)
+                    Text(if (appLanguage == AppLanguage.SWAHILI) "Nimeelewa" else "Understood", fontWeight = FontWeight.Bold, color = BrandGreen)
                 }
             }
         )
@@ -712,7 +940,7 @@ fun MyProfileScreen(
             onDismissRequest = { showTermsDialog = false },
             title = {
                 Text(
-                    text = "Vigezo na Masharti",
+                    text = AppStrings.termsOfService(appLanguage),
                     fontWeight = FontWeight.Bold,
                     fontSize = 17.sp,
                     color = BrandGreenDark
@@ -721,10 +949,17 @@ fun MyProfileScreen(
             text = {
                 Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                     Text(
-                        text = "Vigezo vya matumizi ya ClipZone Ajira:\n\n" +
-                                "1. Matangazo yote ya ajira na wasifu lazima yawe ya kweli na ya halali nchini Tanzania.\n\n" +
-                                "2. Ni marufuku kuweka matangazo ya ulaghai au yanayodai fedha kabla ya usaili.\n\n" +
-                                "3. ClipZone Ajira inalenga kuwa daraja la haraka kati ya watoa ajira na watafuta fursa.",
+                        text = if (appLanguage == AppLanguage.SWAHILI) {
+                            "Vigezo vya matumizi ya ClipZone Ajira:\n\n" +
+                                    "1. Matangazo yote ya ajira na wasifu lazima yawe ya kweli na ya halali nchini Tanzania.\n\n" +
+                                    "2. Ni marufuku kuweka matangazo ya ulaghai au yanayodai fedha kabla ya usaili.\n\n" +
+                                    "3. ClipZone Ajira inalenga kuwa daraja la haraka kati ya watoa ajira na watafuta fursa."
+                        } else {
+                            "Terms of use for ClipZone Ajira:\n\n" +
+                                    "1. All job listings and profiles must be authentic and lawful.\n\n" +
+                                    "2. Fraudulent listings or requesting payment prior to interviews is strictly prohibited.\n\n" +
+                                    "3. ClipZone Ajira serves as a direct bridge connecting opportunities with talent."
+                        },
                         fontSize = 13.sp,
                         color = NeutralDark,
                         lineHeight = 18.sp
@@ -733,7 +968,7 @@ fun MyProfileScreen(
             },
             confirmButton = {
                 TextButton(onClick = { showTermsDialog = false }) {
-                    Text("Sawa", fontWeight = FontWeight.Bold, color = BrandGreen)
+                    Text(if (appLanguage == AppLanguage.SWAHILI) "Sawa" else "OK", fontWeight = FontWeight.Bold, color = BrandGreen)
                 }
             }
         )

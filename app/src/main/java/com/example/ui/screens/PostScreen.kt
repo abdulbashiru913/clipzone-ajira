@@ -66,6 +66,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import com.example.util.AppStrings
 import com.example.data.model.UserRole
 import com.example.ui.theme.BrandAmber
 import com.example.ui.theme.BrandGreen
@@ -357,6 +362,27 @@ fun JobPostForm(
                 shape = RoundedCornerShape(10.dp)
             )
 
+            // Orodha ya Mikoa ya Tanzania kwa Haraka
+            LazyRow(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                items(AppStrings.TANZANIA_REGIONS) { reg ->
+                    val isSelected = location.contains(reg, ignoreCase = true)
+                    FilterChip(
+                        selected = isSelected,
+                        onClick = { location = reg },
+                        label = { Text(reg, fontSize = 11.sp) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = BrandGreenLight,
+                            selectedLabelColor = BrandGreenDark
+                        )
+                    )
+                }
+            }
+
             Spacer(modifier = Modifier.height(10.dp))
 
             // Kiwango cha Mshahara
@@ -606,6 +632,27 @@ fun ProfilePostForm(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp)
             )
+
+            // Orodha ya Mikoa ya Tanzania kwa Haraka
+            LazyRow(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                items(AppStrings.TANZANIA_REGIONS) { reg ->
+                    val isSelected = location.contains(reg, ignoreCase = true)
+                    FilterChip(
+                        selected = isSelected,
+                        onClick = { location = reg },
+                        label = { Text(reg, fontSize = 11.sp) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = BrandGreenLight,
+                            selectedLabelColor = BrandGreenDark
+                        )
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.height(10.dp))
 

@@ -52,6 +52,8 @@ import com.example.ui.theme.BrandGreenDark
 import com.example.ui.theme.BrandGreenLight
 import com.example.ui.theme.MyApplicationTheme
 import com.example.ui.viewmodel.AjiraViewModel
+import com.example.util.AppLanguage
+import com.example.util.AppStrings
 
 sealed interface AppDestination {
     object Splash : AppDestination
@@ -62,10 +64,10 @@ sealed interface AppDestination {
     object Post : AppDestination
 }
 
-enum class BottomNavTab(val title: String) {
-    HOME("Nyumbani"),
-    NOTIFICATIONS("Arifa"),
-    PROFILE("Wasifu Wangu")
+enum class BottomNavTab {
+    HOME,
+    NOTIFICATIONS,
+    PROFILE
 }
 
 class MainActivity : ComponentActivity() {
@@ -89,6 +91,7 @@ fun ClipZoneAjiraApp(viewModel: AjiraViewModel) {
     var currentDestination by remember { mutableStateOf<AppDestination>(AppDestination.Splash) }
     var selectedBottomTab by remember { mutableStateOf(BottomNavTab.HOME) }
 
+    val appLanguage by viewModel.appLanguage.collectAsState()
     val selectedJob by viewModel.selectedJob.collectAsState()
     val selectedProfile by viewModel.selectedProfile.collectAsState()
 
@@ -130,7 +133,7 @@ fun ClipZoneAjiraApp(viewModel: AjiraViewModel) {
                                 tonalElevation = 8.dp,
                                 modifier = Modifier.testTag("bottom_navigation_bar")
                             ) {
-                                // Tab 1: Nyumbani
+                                // Tab 1: Nyumbani / Home
                                 val isHomeSelected = selectedBottomTab == BottomNavTab.HOME
                                 NavigationBarItem(
                                     selected = isHomeSelected,
@@ -138,12 +141,12 @@ fun ClipZoneAjiraApp(viewModel: AjiraViewModel) {
                                     icon = {
                                         Icon(
                                             imageVector = if (isHomeSelected) Icons.Filled.Home else Icons.Outlined.Home,
-                                            contentDescription = "Nyumbani"
+                                            contentDescription = AppStrings.home(appLanguage)
                                         )
                                     },
                                     label = {
                                         Text(
-                                            text = "Nyumbani",
+                                            text = AppStrings.home(appLanguage),
                                             fontSize = 12.sp,
                                             fontWeight = if (isHomeSelected) FontWeight.Bold else FontWeight.Normal
                                         )
@@ -157,7 +160,7 @@ fun ClipZoneAjiraApp(viewModel: AjiraViewModel) {
                                     )
                                 )
 
-                                // Tab 2: Arifa
+                                // Tab 2: Arifa / Notifications
                                 val isNotifSelected = selectedBottomTab == BottomNavTab.NOTIFICATIONS
                                 NavigationBarItem(
                                     selected = isNotifSelected,
@@ -165,12 +168,12 @@ fun ClipZoneAjiraApp(viewModel: AjiraViewModel) {
                                     icon = {
                                         Icon(
                                             imageVector = if (isNotifSelected) Icons.Filled.Notifications else Icons.Outlined.Notifications,
-                                            contentDescription = "Arifa"
+                                            contentDescription = AppStrings.notifications(appLanguage)
                                         )
                                     },
                                     label = {
                                         Text(
-                                            text = "Arifa",
+                                            text = AppStrings.notifications(appLanguage),
                                             fontSize = 12.sp,
                                             fontWeight = if (isNotifSelected) FontWeight.Bold else FontWeight.Normal
                                         )
@@ -184,7 +187,7 @@ fun ClipZoneAjiraApp(viewModel: AjiraViewModel) {
                                     )
                                 )
 
-                                // Tab 3: Wasifu Wangu
+                                // Tab 3: Wasifu Wangu / Profile
                                 val isProfileSelected = selectedBottomTab == BottomNavTab.PROFILE
                                 NavigationBarItem(
                                     selected = isProfileSelected,
@@ -192,12 +195,12 @@ fun ClipZoneAjiraApp(viewModel: AjiraViewModel) {
                                     icon = {
                                         Icon(
                                             imageVector = if (isProfileSelected) Icons.Filled.Person else Icons.Outlined.Person,
-                                            contentDescription = "Wasifu Wangu"
+                                            contentDescription = AppStrings.profile(appLanguage)
                                         )
                                     },
                                     label = {
                                         Text(
-                                            text = "Wasifu",
+                                            text = AppStrings.profile(appLanguage),
                                             fontSize = 12.sp,
                                             fontWeight = if (isProfileSelected) FontWeight.Bold else FontWeight.Normal
                                         )

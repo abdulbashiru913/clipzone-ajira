@@ -10,6 +10,7 @@ import com.example.data.model.Job
 import com.example.data.model.JobSeekerProfile
 import com.example.data.model.UserRole
 import com.example.data.repository.AjiraRepository
+import com.example.util.AppLanguage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -33,6 +34,9 @@ sealed interface PostUiState {
 class AjiraViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository = AjiraRepository(application.applicationContext)
+
+    // Language State (Swahili / English)
+    val appLanguage: StateFlow<AppLanguage> = repository.appLanguage
 
     // Current tab on FeedScreen
     private val _selectedTab = MutableStateFlow(FeedTab.JOB_SEEKERS)
@@ -81,7 +85,9 @@ class AjiraViewModel(application: Application) : AndroidViewModel(application) {
                     job.location.contains(query, ignoreCase = true) ||
                     job.description.contains(query, ignoreCase = true)
 
-            val matchesLocation = location == "Mikoa Yote" || job.location.contains(location, ignoreCase = true)
+            val matchesLocation = location == "Mikoa Yote" || location == "All Regions" || location.isBlank() ||
+                    job.location.contains(location, ignoreCase = true) ||
+                    (location.contains("(") && job.location.contains(location.substringBefore(" (").trim(), ignoreCase = true))
             val matchesCategory = category == "Kada Zote" || job.category.contains(category, ignoreCase = true)
 
             matchesQuery && matchesLocation && matchesCategory
@@ -102,7 +108,9 @@ class AjiraViewModel(application: Application) : AndroidViewModel(application) {
                     profile.location.contains(query, ignoreCase = true) ||
                     profile.skills.any { it.contains(query, ignoreCase = true) }
 
-            val matchesLocation = location == "Mikoa Yote" || profile.location.contains(location, ignoreCase = true)
+            val matchesLocation = location == "Mikoa Yote" || location == "All Regions" || location.isBlank() ||
+                    profile.location.contains(location, ignoreCase = true) ||
+                    (location.contains("(") && profile.location.contains(location.substringBefore(" (").trim(), ignoreCase = true))
             val matchesCategory = category == "Kada Zote" || profile.title.contains(category, ignoreCase = true) ||
                     profile.skills.any { it.contains(category, ignoreCase = true) }
 
@@ -134,6 +142,10 @@ class AjiraViewModel(application: Application) : AndroidViewModel(application) {
         _selectedProfile.value = profile
     }
 
+    fun setAppLanguage(language: AppLanguage) {
+        repository.setAppLanguage(language)
+    }
+
     fun updateUserProfile(
         fullName: String,
         phoneNumber: String,
@@ -141,9 +153,10 @@ class AjiraViewModel(application: Application) : AndroidViewModel(application) {
         location: String,
         profession: String,
         bio: String,
-        role: UserRole
+        avatarUrl: String = currentUser.value.avatarUrl,
+        role: UserRole = currentUser.value.role
     ) {
-        repository.updateUserProfile(fullName, phoneNumber, email, location, profession, bio, role)
+        repository.updateUserProfile(fullName, phoneNumber, email, location, profession, bio, avatarUrl, role)
     }
 
     fun loginUser(phone: String, email: String, fullName: String, role: UserRole) {
@@ -250,7 +263,8 @@ class AjiraViewModel(application: Application) : AndroidViewModel(application) {
                 email = email.trim(),
                 bio = bio.trim(),
                 salaryExpectation = salaryExpectation.trim().ifBlank { "Makubaliano" },
-                availability = availability.trim()
+                availability = availability.trim(),
+                avatarUrl = currentUser.value.avatarUrl
             )
 
             val result = repository.postProfile(newProfile)

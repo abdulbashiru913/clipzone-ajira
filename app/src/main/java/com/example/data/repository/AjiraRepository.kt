@@ -10,6 +10,7 @@ import com.example.data.model.CurrentUser
 import com.example.data.model.Job
 import com.example.data.model.JobSeekerProfile
 import com.example.data.model.UserRole
+import com.example.util.AppLanguage
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
@@ -57,6 +58,16 @@ class AjiraRepository(private val context: Context) {
 
     private val prefs = context.getSharedPreferences("clipzone_user_prefs", Context.MODE_PRIVATE)
 
+    // Mfumo wa Lugha (Swahili / English)
+    private val _appLanguage = MutableStateFlow(
+        try {
+            AppLanguage.valueOf(prefs.getString("app_language", AppLanguage.SWAHILI.name) ?: AppLanguage.SWAHILI.name)
+        } catch (e: Exception) {
+            AppLanguage.SWAHILI
+        }
+    )
+    val appLanguage: StateFlow<AppLanguage> = _appLanguage.asStateFlow()
+
     // Hali ya Mtumiaji (Inapakia moja kwa moja kutoka kwenye hifadhi ya simu bila akaunti au password)
     private val _currentUser = MutableStateFlow(
         CurrentUser(
@@ -69,6 +80,7 @@ class AjiraRepository(private val context: Context) {
             location = prefs.getString("user_location", "Dar es Salaam") ?: "Dar es Salaam",
             profession = prefs.getString("user_profession", "") ?: "",
             bio = prefs.getString("user_bio", "") ?: "",
+            avatarUrl = prefs.getString("user_avatar", "") ?: "",
             role = try {
                 UserRole.valueOf(prefs.getString("user_role", UserRole.JOB_SEEKER.name) ?: UserRole.JOB_SEEKER.name)
             } catch (e: Exception) {
@@ -338,7 +350,8 @@ class AjiraRepository(private val context: Context) {
         location: String,
         profession: String,
         bio: String,
-        role: UserRole
+        avatarUrl: String = _currentUser.value.avatarUrl,
+        role: UserRole = _currentUser.value.role
     ) {
         val updated = _currentUser.value.copy(
             fullName = fullName.ifBlank { "Mtumiaji wa ClipZone" },
@@ -347,6 +360,7 @@ class AjiraRepository(private val context: Context) {
             location = location.ifBlank { "Dar es Salaam" },
             profession = profession,
             bio = bio,
+            avatarUrl = avatarUrl,
             role = role,
             isLoggedIn = true
         )
@@ -360,8 +374,14 @@ class AjiraRepository(private val context: Context) {
             .putString("user_location", updated.location)
             .putString("user_profession", updated.profession)
             .putString("user_bio", updated.bio)
+            .putString("user_avatar", updated.avatarUrl)
             .putString("user_role", updated.role.name)
             .apply()
+    }
+
+    fun setAppLanguage(language: AppLanguage) {
+        _appLanguage.value = language
+        prefs.edit().putString("app_language", language.name).apply()
     }
 
     fun setUserLogin(phoneNumber: String, email: String, fullName: String, role: UserRole) {
@@ -372,6 +392,7 @@ class AjiraRepository(private val context: Context) {
             location = _currentUser.value.location,
             profession = _currentUser.value.profession,
             bio = _currentUser.value.bio,
+            avatarUrl = _currentUser.value.avatarUrl,
             role = role
         )
     }

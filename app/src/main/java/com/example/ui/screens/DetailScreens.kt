@@ -27,6 +27,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.Call
+import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.LocationOn
@@ -57,7 +58,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import coil.compose.AsyncImage
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -524,30 +527,42 @@ fun ProfileDetailScreen(
                     modifier = Modifier.padding(18.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(76.dp)
-                            .clip(CircleShape)
-                            .background(
-                                Brush.linearGradient(
-                                    listOf(BrandGreenLight, Color(0xFFC8E6C9))
-                                )
-                            )
-                            .border(2.dp, BrandGreen, CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        val initials = profile.fullName.split(" ")
-                            .take(2)
-                            .mapNotNull { it.firstOrNull()?.toString() }
-                            .joinToString("")
-                            .ifBlank { "MK" }
-
-                        Text(
-                            text = initials,
-                            fontSize = 26.sp,
-                            fontWeight = FontWeight.Black,
-                            color = BrandGreenDark
+                    if (!profile.avatarUrl.isNullOrBlank()) {
+                        AsyncImage(
+                            model = profile.avatarUrl,
+                            contentDescription = profile.fullName,
+                            modifier = Modifier
+                                .size(84.dp)
+                                .clip(CircleShape)
+                                .border(2.5.dp, BrandGreen, CircleShape),
+                            contentScale = ContentScale.Crop
                         )
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .size(84.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    Brush.linearGradient(
+                                        listOf(BrandGreenLight, Color(0xFFC8E6C9))
+                                    )
+                                )
+                                .border(2.dp, BrandGreen, CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            val initials = profile.fullName.split(" ")
+                                .take(2)
+                                .mapNotNull { it.firstOrNull()?.toString() }
+                                .joinToString("")
+                                .ifBlank { "MK" }
+
+                            Text(
+                                text = initials,
+                                fontSize = 26.sp,
+                                fontWeight = FontWeight.Black,
+                                color = BrandGreenDark
+                            )
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(12.dp))
@@ -609,6 +624,87 @@ fun ProfileDetailScreen(
                                 fontWeight = FontWeight.Bold,
                                 color = BrandBlue,
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Contact Action Buttons (Call, SMS, WhatsApp) at the top
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        // Button: Piga Simu (Call)
+                        Button(
+                            onClick = { callPhone(context, profile.phone) },
+                            modifier = Modifier
+                                .weight(1.2f)
+                                .height(46.dp)
+                                .testTag("btn_top_call_profile"),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = BrandGreen)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Call,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "Piga Simu",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
+
+                        // Button: Tuma SMS
+                        OutlinedButton(
+                            onClick = { sendProfileSms(context, profile) },
+                            modifier = Modifier
+                                .weight(1.1f)
+                                .height(46.dp)
+                                .testTag("btn_top_sms_profile"),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = BrandGreenDark)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Message,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "Tuma SMS",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        // Button: WhatsApp
+                        OutlinedButton(
+                            onClick = { openWhatsApp(context, profile.phone) },
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(46.dp)
+                                .testTag("btn_top_whatsapp_profile"),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = Color(0xFF16A34A)
+                            )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Chat,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "WhatsApp",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
                             )
                         }
                     }
@@ -850,4 +946,21 @@ private fun shareProfile(context: Context, profile: JobSeekerProfile) {
         putExtra(Intent.EXTRA_TEXT, text)
     }
     context.startActivity(Intent.createChooser(intent, "Shiriki Wasifu"))
+}
+
+private fun openWhatsApp(context: Context, phone: String) {
+    try {
+        val cleanPhone = phone.replace("+", "").replace(" ", "").replace("-", "")
+        val formattedPhone = if (cleanPhone.startsWith("0")) {
+            "255" + cleanPhone.substring(1)
+        } else if (!cleanPhone.startsWith("255")) {
+            "255$cleanPhone"
+        } else cleanPhone
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            data = Uri.parse("https://api.whatsapp.com/send?phone=$formattedPhone")
+        }
+        context.startActivity(intent)
+    } catch (e: Exception) {
+        Toast.makeText(context, "Haikuweza kufungua WhatsApp.", Toast.LENGTH_SHORT).show()
+    }
 }

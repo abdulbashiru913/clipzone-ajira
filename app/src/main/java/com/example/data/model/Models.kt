@@ -1,5 +1,7 @@
 package com.example.data.model
 
+import com.example.util.AppLanguage
+
 /**
  * Muundo wa data ya Kazi iliyowekwa na Mwajiri
  */
@@ -43,9 +45,14 @@ data class JobSeekerProfile(
 /**
  * Aina ya Mtumiaji
  */
-enum class UserRole(val displayNameSwahili: String) {
-    JOB_SEEKER("Natafuta Kazi"),
-    EMPLOYER("Ninaajiri")
+enum class UserRole(val displayNameSwahili: String, val displayNameEnglish: String) {
+    JOB_SEEKER("Natafuta Kazi", "Looking for Job"),
+    EMPLOYER("Ninaajiri", "Hiring / Employer");
+
+    fun getDisplayName(lang: AppLanguage): String = when (lang) {
+        AppLanguage.SWAHILI -> displayNameSwahili
+        AppLanguage.ENGLISH -> displayNameEnglish
+    }
 }
 
 /**
@@ -59,6 +66,7 @@ data class CurrentUser(
     val location: String = "Dar es Salaam",
     val profession: String = "",
     val bio: String = "",
+    val avatarUrl: String = "",
     val role: UserRole = UserRole.JOB_SEEKER,
     val isLoggedIn: Boolean = true
 )
